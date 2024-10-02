@@ -9,7 +9,7 @@ AKY 是一个基于 React 作为前端框架，TypeScript 作为开发语言，�
 node版本：18.18.2
 
 ```bash
-npm run install
+npm install
 npm run dev
 ```
 
