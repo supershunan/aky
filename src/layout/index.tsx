@@ -20,8 +20,6 @@ const App: React.FC = () => {
     return (
         <Layout style={{ height: '100%' }}>
             <Sider
-                breakpoint="lg"
-                collapsedWidth="0"
                 trigger={null}
                 collapsible
                 collapsed={collapsed}
