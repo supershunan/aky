@@ -1,7 +1,5 @@
-import { useTranslation } from 'react-i18next';
-
 export default function Logo() {
-    const { t } = useTranslation();
+    const NAME = import.meta.env.VITE_NAME
 
     return (
         <div style={{
@@ -10,7 +8,7 @@ export default function Logo() {
             textAlign: 'center',
             padding: '20px 0'
         }}>
-            AKY | {t('安琪能')}
+            {NAME}
         </div>
     )
 }
