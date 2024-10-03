@@ -65,15 +65,15 @@ export default function HeadRight() {
     const personalCenterButtons = useMemo(() => {
         return (
             <div className="btns" style={{ display: "flex", flexFlow: 'column' }}>
-                <Button type="text" color="primary" onClick={updatePwd}>
+                {/* <Button type="text" color="primary" onClick={updatePwd}>
                     {t('密码修改')}
-                </Button>
+                </Button> */}
                 <Button type="text" onClick={signOut}>
                     {t('退出登录')}
                 </Button>
             </div>
         )
-    }, [t, updatePwd, signOut])
+    }, [t, signOut])
 
     return (
         <div className="head-right">
