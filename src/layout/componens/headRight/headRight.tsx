@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BellOutlined, GlobalOutlined, UserOutlined } from "@ant-design/icons";
-import { Button, message, Popconfirm, PopconfirmProps, Select } from "antd";
+import { Button, message, Popconfirm, PopconfirmProps } from "antd";
 import './index.less'
 import i18n from "@src/locales/i18n";
 import { useTranslation } from 'react-i18next';
@@ -42,10 +42,6 @@ export default function HeadRight() {
         message.warning(t('退出登录成功'));
     }, []);
 
-    const handleChange = (value: string) => {
-        console.log(`selected ${value}`);
-    };
-
     const languageButtons = useMemo(() => {
         return (
             <div className="btns" style={{ display: "flex", flexFlow: 'column' }}>
@@ -82,17 +78,6 @@ export default function HeadRight() {
                 缺少图标
             </div>
             <div className="right-tools">
-                <Select
-                    defaultValue="lucy"
-                    style={{ width: 120 }}
-                    onChange={handleChange}
-                    options={[
-                        { value: 'jack', label: 'Jack' },
-                        { value: 'lucy', label: 'Lucy' },
-                        { value: 'Yiminghe', label: 'yiminghe' },
-                        { value: 'disabled', label: 'Disabled', disabled: true },
-                    ]}
-                />
                 <Popconfirm
                     title={t('消息通知')}
                     description="测试信息"
@@ -101,7 +86,7 @@ export default function HeadRight() {
                     okText={t('全部已读')}
                     showCancel={false}
                 >
-                    <div className="icon" style={{ marginLeft: '15px' }}>
+                    <div className="icon">
                         <BellOutlined style={{ fontSize: "18px" }} />
                     </div>
                 </Popconfirm>
