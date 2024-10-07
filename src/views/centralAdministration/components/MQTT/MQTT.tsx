@@ -1,117 +1,117 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Form, Input, Button, Card, Space, Table } from "antd";
-import { useMQTT } from "@src/utils/hooks/useMQTT";
+import { MQTTClient } from "@src/utils/hooks/useMQTT";
+import { MQTTStatusEnum } from "@src/enum/global";
+
+interface MQTTMessage {
+    topic?: string;
+    message?: string;
+    time?: string;
+}
 
 export default function MQTTSettings() {
     const [form] = Form.useForm();
     const [isConnected, setIsConnected] = useState(false);
-    // const [tableMessages, setTableMessages] = useState<
-    //     { sn: number; ts: string; a: string; b: string; c: string }[]
-    // >([]);
-    const [initialValues, setInitialValues] = useState({
-        address: "mqtt://test.mosquitto.org",
-        port: "8083",
-        path: "/mqtt",
-        clientId: "clientID_60a4b1e6",
-        username: "test",
-        password: "123456",
-    });
-    const [topic, setTopic] = useState("test/topic");
-    const [message, setMessage] = useState("");
-    const [subscriptions, setSubscriptions] = useState<string[]>([]);
-    const {
-        client,
-        connectStatus,
-        messages,
-        connect: connectMQTT,
-        disconnect: disconnectMQTT,
-        subscribe,
-        unsubscribe,
-        publish,
-    } = useMQTT({
-        url: initialValues.address,
-        options: {
-            clientId: initialValues.clientId,
-            //   username: initialValues.username,
-            //   password: initialValues.password,
-        },
-    });
+    const mqttClient = useRef<MQTTClient>();
+    const [message, setMessage] = useState<string[]>([]);
+    const [mqttMsg, setMqttMsg] = useState<MQTTMessage[]>([]);
+
 
     useEffect(() => {
-        if (connectStatus === "Connected") {
-            subscriptions.forEach((topic) => subscribe(topic));
+        if (mqttClient.current) {
+            mqttClient.current.onMessage((message: MQTTMessage[]) => {
+                setMqttMsg(() => [...message]);
+                setMessage((preMessage) => [...preMessage, message[message.length - 1].message]);
+            });
         }
-    }, [connectStatus, subscribe, subscriptions]);
 
-    const handleConnect = useCallback(() => {
-        if (connectStatus === "Connected") {
-            disconnectMQTT();
-        } else {
-            connectMQTT();
-        }
-        // form.validateFields().then(() => {
-        //     const values = form.getFieldsValue();
-        //     mqtt.connect("mqtt://test.mosquitto.org");
-        //     console.log(values);
-        //     setIsConnected(true);
-        // });
-    }, [connectStatus, connectMQTT, disconnectMQTT]);
-
-    const handleSubscribe = useCallback(() => {
-        if (!subscriptions.includes(topic)) {
-            setSubscriptions((prev) => [...prev, topic]);
-            if (connectStatus === "Connected") {
-                subscribe(topic);
+        return () => {
+            if (mqttClient.current) {
+                mqttClient.current.onMessage(null);
             }
-        }
-    }, [connectStatus, subscribe, subscriptions, topic]);
+        };
+    }, [mqttMsg]);
 
-    const handleUnsubscribe = useCallback(
-        (topicToRemove: string) => {
-            setSubscriptions((prev) => prev.filter((t) => t !== topicToRemove));
-            if (connectStatus === "Connected") {
-                unsubscribe(topicToRemove);
+    useEffect(() => {
+        if (mqttClient.current) {
+            mqttClient.current.onStatus((message: string) => {
+                setMessage((preMessage) => [...preMessage, MQTTStatusEnum[message]]);
+            });
+        }
+
+        return () => {
+            if (mqttClient.current) {
+                mqttClient.current.onStatus(null);
             }
-        },
-        [connectStatus, unsubscribe]
-    );
+        };
+    }, [message]);
 
-    const handlePublish = useCallback(() => {
-        if (message && topic) {
-            publish(topic, message);
-            setMessage("");
-        }
-    }, [message, topic, publish]);
+    const handleConnect = () => {
+        form.validateFields().then(() => {
+            const { address, port, path, clientId, username, password } =
+                form.getFieldsValue();
+            const url = address + ':' + port + path;
+            const options = {
+                clientID: clientId,
+                username,
+                password
+            }
+
+            mqttClient.current = new MQTTClient({url, options});
+            mqttClient.current.connect()
+            setMessage([])
+            setIsConnected(true);
+        })
+    };
 
     const handleDisconnect = () => {
+        if (!mqttClient.current) return;
+
+        mqttClient.current.disconnect();
+        mqttClient.current = undefined;
         setIsConnected(false);
     };
 
-    // const handleSubscribe = (values: { topic: string }) => {
-    //     console.log("Subscribed to:", values.topic);
-    // };
+    const handleSubscribe = (values: { topic: string }) => {
+        if (!mqttClient.current) return;
+        mqttClient.current.subscribe(values.topic)
+        const msg = mqttClient.current.getMessages();
+        setMqttMsg(msg);
+    };
 
-    // const handlePublish = (values: { topic: string; message: string }) => {
-    //     console.log("Published to:", values.topic, "Message:", values.message);
-    // };
+    const handlePublish = (values: { topic: string; message: string }) => {
+        if (!mqttClient.current) return;
+        mqttClient.current.publish(values.topic, values.message);
+        const msg = mqttClient.current.getMessages();
+        setMqttMsg(msg);
+    };
 
     const columns = [
-        { title: "sn", dataIndex: "sn", key: "sn" },
-        { title: "ts", dataIndex: "ts", key: "ts" },
-        { title: "a", dataIndex: "a", key: "a" },
-        { title: "b", dataIndex: "b", key: "b" },
-        { title: "c", dataIndex: "c", key: "c" },
+        { title: "名称", dataIndex: "topic", key: "topic" },
+        { title: "值", dataIndex: "message", key: "message" },
+        { title: "时间", dataIndex: "time", key: "time" },
     ];
 
     return (
         <Card title="MQTT 服务器设置">
-            <Form form={form} layout="vertical" initialValues={initialValues}>
+            <Form
+                form={form}
+                layout="vertical"
+                initialValues={{
+                    address: "ws://broker.emqx.io",
+                    port: "8083",
+                    path: "/mqtt",
+                    clientId: "clientID_60a4b1e6",
+                    username: "test",
+                    password: "123",
+                }}
+            >
                 <Form.Item
                     name="address"
                     label="服务器地址"
                     rules={[{ required: true }]}
                 >
-                    <Input placeholder="ws://broker.emqx.io" />
+                    <Input />
                 </Form.Item>
                 <Form.Item name="port" label="服务器端口" rules={[{ required: true }]}>
                     <Input />
@@ -148,7 +148,7 @@ export default function MQTTSettings() {
                 </Form.Item>
             </Form>
 
-            {/* <Card title="MQTT 订阅" size="small" style={{ marginTop: 16 }}>
+            <Card title="MQTT 订阅" size="small" style={{ marginTop: 16 }}>
                 <Form onFinish={handleSubscribe}>
                     <Space>
                         <Form.Item name="topic" rules={[{ required: true }]}>
@@ -185,18 +185,18 @@ export default function MQTTSettings() {
                 <Input.TextArea
                     rows={4}
                     readOnly
-                    value={tableMessages.map((m) => JSON.stringify(m)).join("\n")}
+                    value={message.map((m) => JSON.stringify(m)).join("\n")}
                 />
             </Card>
 
             <Card title="数据表格" size="small" style={{ marginTop: 16 }}>
                 <Table
                     columns={columns}
-                    dataSource={tableMessages}
+                    dataSource={mqttMsg}
                     pagination={false}
                     size="small"
                 />
-            </Card> */}
+            </Card>
         </Card>
     );
 }
