@@ -53,7 +53,6 @@ export default function Login() {
                         options={[
                             { value: LanguageEnum.CN, label: '中文' },
                             { value: LanguageEnum.EN, label: 'English' },
-                            { value: LanguageEnum.JP, label: '日本語' },
                         ]}
                     />
                 </div>

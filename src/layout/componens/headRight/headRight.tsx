@@ -51,9 +51,6 @@ export default function HeadRight() {
                 <Button type="text" onClick={() => changeLanguage(LanguageEnum.EN)}>
                     {t('切换到英文')}
                 </Button>
-                <Button type="text" onClick={() => changeLanguage(LanguageEnum.JP)}>
-                    {t('切换到日文')}
-                </Button>
             </div>
         )
     }, [t, changeLanguage])
